@@ -1,0 +1,76 @@
+---
+title: "CASE STUDY TITLE"
+author: "YOUR NAME"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:  
+    keep_md: true
+    toc: true
+    toc_float: true
+    code_folding: hide
+    fig_height: 6
+    fig_width: 12
+    fig_align: 'center'
+---
+
+```{r, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r load_libraries, include=FALSE}
+# Use this R-Chunk to load all your libraries!
+#install.packages("tidyverse") # run this line once in console to get package
+library(tidyverse)
+library(dplyr)
+library(knitr)
+```
+
+```{r load_data}
+# Use this R-Chunk to import all your datasets!
+library(nycflights13)
+
+```
+
+## Background
+
+    [X] Make an R script that has the code examples from Chapter 4 of R for data science (Links to an external site.) and Chapter 1 of Modern Drive (Links to an external site.)
+    
+## Data Wrangling
+
+```{r tidy_data}
+# Use this R-Chunk to clean & wrangle your data!
+
+#some little experiments to get familiar
+r_rocks <- 2 ^ 3
+r_rocks
+seq(1,10)
+x <- "hello world"
+y <- seq(1, 10, length.out = 5)
+
+```
+
+## Data Visualization
+
+```{r plot_data}
+# Use this R-Chunk to plot & visualize your data!
+#Exercise
+#Tweak each of the following R commands so that they run correctly:
+ggplot(data = mpg) + geom_point(mapping = aes(x = displ, y = hwy))
+
+filter(mpg, cyl == 8)
+filter(diamonds, carat > 3)
+```
+```{r plot data}
+flights
+View(flights)
+glimpse(flights)
+
+kable(airlines)
+airlines$name
+
+glimpse(airports)
+
+?flights
+```
+
+## Conclusions
