@@ -1,6 +1,6 @@
 ---
-title: "CASE STUDY TITLE"
-author: "YOUR NAME"
+title: "Task 2: A first time for everything"
+author: "abdias baldiviezo"
 date: "May 14, 2020"
 output:
   html_document:  
