@@ -1,0 +1,12 @@
+name: scriptures_analysis
+title: scriptures_analysis
+username:
+account: abdiasbaldiviezo
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2600375
+bundleId: 3422543
+url: https://abdiasbaldiviezo.shinyapps.io/scriptures_analysis/
+when: 1595441804.9524
+asMultiple: FALSE
+asStatic: FALSE

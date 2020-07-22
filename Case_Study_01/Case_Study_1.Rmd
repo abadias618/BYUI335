@@ -1,6 +1,6 @@
 ---
-title: "CASE STUDY TITLE"
-author: "YOUR NAME"
+title: "Visualization Critique and Slack Set-up"
+author: "A. Abdias Baldiviezo"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 output:
   html_document:  

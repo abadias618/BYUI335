@@ -1,0 +1,168 @@
+---
+title: "Getting in SHP"
+author: "A. Abdias Baldiviezo"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:  
+    keep_md: true
+    toc: true
+    toc_float: true
+    code_folding: hide
+    fig_height: 6
+    fig_width: 12
+    fig_align: 'center'
+---
+
+```{r, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r load_libraries, include=FALSE}
+# Use this R-Chunk to load all your libraries!
+#install.packages("tidyverse") # run this line once in console to get package
+library(tidyverse)
+library(sf)
+library(ggrepel)
+library(downloader)
+```
+
+```{r load_data}
+# first shp for the whole map of the us
+tmp <- tempfile(fileext = ".zip")
+download(url = "https://byuistats.github.io/M335/data/shp.zip", destfile = tmp, mode="wb")
+unzip(as.character(tmp), list = TRUE)
+unzip(as.character(tmp))
+states <- st_read("County-AK-HI-Moved-USA-Map.shp")
+unlink(tmp)
+
+# water map
+tmp2 <- tempfile(fileext = ".zip")
+download(url = "https://research.idwr.idaho.gov/gis/Spatial/Hydrography/streams_lakes/c_250k/hyd250.zip", destfile = tmp2, mode="wb")
+unzip(as.character(tmp2), list = TRUE)
+unzip(as.character(tmp2))
+water <- st_read("hyd250.shp")
+unlink(tmp2)
+
+# well
+tmp3 <- tempfile(fileext = ".zip")
+download(url = "https://opendata.arcgis.com/datasets/1abb666937894ae4a87afe9655d2ff83_1.zip", destfile = tmp3, mode="wb")
+unzip(as.character(tmp3), list = TRUE)
+unzip(as.character(tmp3))
+well <- st_read("Wells.shp")
+unlink(tmp3)
+
+# water
+tmp4 <- tempfile(fileext = ".zip")
+download(url = "https://data-idwr.opendata.arcgis.com/datasets/e163d7da3b84410ab94700a92b7735ce_0.zip", destfile = tmp4, mode="wb")
+unzip(as.character(tmp4), list = TRUE)
+unzip(as.character(tmp4))
+dam <- st_read("Dams_of_Idaho.shp")
+unlink(tmp4)
+```
+
+## Background
+
+We have been asked by the state of Idaho to visualize permitted well locations with a production of more than 5000 gallons and the spatial relationship of the large wells to the locations of large dams (surface area larger than 50 acres). They have provided a a shp file (https://byuistats.github.io/M335/data/shp.zip) for us and given us a web address for the well (https://data-idwr.opendata.arcgis.com/datasets/1abb666937894ae4a87afe9655d2ff83_1.zip), dam (https://data-idwr.opendata.arcgis.com/datasets/e163d7da3b84410ab94700a92b7735ce_0.zip), and water (https://research.idwr.idaho.gov/gis/Spatial/Hydrography/streams_lakes/c_250k/hyd250.zip) locations. They would like to have the Snake River and Henrys Fork rivers plotted.
+
+Their US map is projected to show the entire US. You will need to subset the data to Idaho and then reproject the map, so Idaho is not tilted.
+
+## Notes
+
+-Using st_read
+--nc <- st_read(fname)
+--st_read("PG:dbname=postgis", "sids")
+--st_read(fname, stringsAsFactors = FALSE)
+--options(stringsAsFactors = FALSE)
+--st_read(fname)
+
+-Using st_write
+--st_write(nc, "nc1.shp")
+--st_write(nc, dsn = "nc1.shp", layer = "nc.shp", driver = "ESRI Shapefile")
+
+-Dataset and layer reading or creation options
+--st_write(st_as_sf(meuse), "PG:dbname=postgis", "meuse",
+--layer_options = "OVERWRITE=true")
+
+-Reading and writing directly to and from spatial databases
+--"library(RPostgreSQL)
+conn = dbConnect(PostgreSQL(), dbname = "postgis")
+meuse = st_read(conn, "meuse")
+meuse_1_3 = st_read(conn, query = "select * from meuse limit 3;")
+dbDisconnect(conn)"
+--"conn = dbConnect(PostgreSQL(), dbname = "postgis")
+st_write(conn, meuse, drop = TRUE)
+dbDisconnect(conn)"
+
+-Conversion to other formats: WKT, WKB, sp
+--"st_point(c(0,1))
+--## POINT (0 1)
+--st_linestring(matrix(0:9,ncol=2,byrow=TRUE))
+--## LINESTRING (0 1, 2 3, 4 5, 6 7, 8 9)"
+
+-We can create these well-known text strings explicitly using st_as_text:
+      x = st_linestring(matrix(0:9,ncol=2,byrow=TRUE))
+      str = st_as_text(x)
+      x
+      LINESTRING (0 1, 2 3, 4 5, 6 7, 8 9)
+
+----------COORDINATE SYSTEMS---------------
+-A coordinate system definition can be passed to a spatial object. It can either fill a spatial object’s empty CS definition or it can overwrite and existing definition (the latter should only be executed if there is good reason to believe that the original definition is erroneous)
+
+-We’ll pretend that a CS definition was not assigned to s.sf and assign one manually using the st_set_crs() function.
+
+    s.sf <- st_set_crs(s.sf, "+proj=utm +zone=19 +ellps=GRS80 +datum=NAD83") 
+-To do the same with a raster object simply assign the PROJ4 string to the crs() function as follows (here too we’ll assume that the spatial object had a missing reference system or an incorrectly defined one).
+
+    crs(elev.r) <- "+proj=utm +zone=19 +ellps=GRS80 +datum=NAD83"
+
+-Transforming coordinate systems
+
+-to transform the s.sf vector object to a geographic (lat/long) coordinate system, we’ll use sf’s st_transform function.
+
+    s.sf.gcs <- st_transform(s.sf, "+proj=longlat +datum=WGS84")
+    st_crs(s.sf.gcs)
+    
+-A geographic coordinate system is often desired when overlapping a web based mapping service such as Google, Bing or OpenStreetMap. To check that s.sf.gcs was properly transformed, we’ll overlay it on top of an OpenStreetMap using the leaflet package.
+    
+    library(leaflet)
+    leaflet(s.sf.gcs) %>% 
+      addPolygons() %>% 
+      addTiles()
+      
+      
+## Data Wrangling
+
+```{r tidy_data}
+#narrow just to Idaho
+idaho <- filter(states, StateName == "Idaho")
+#flip the tilted initial layout
+idaho <- st_transform(idaho, "+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+# narrow water to only 2 rivers
+rivers <- filter(water, FEAT_NAME == "Snake River" | FEAT_NAME == "Henrys Fork")
+#re-project rivers
+rivers <- st_transform(rivers, "+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+
+#filter large wells
+summary(well$Production)
+well <- filter(well, Production >= 5000)
+
+#filter large dams
+summary(dam$SurfaceAre)
+dam <- filter(dam, SurfaceAre >= 50)
+```
+
+## Data Visualization
+
+```{r plot_data}
+# Use this R-Chunk to plot & visualize your data!
+ggplot(data = idaho) + geom_sf(fill = NA)+ geom_sf(data = idaho) + labs(title = "Idaho by County")
+ggplot(data = idaho) + geom_sf(fill = NA) + geom_sf(data = rivers, color = "blue") + labs(title = "Snake and Henrys Fork Rivers")
+ggplot(data = idaho) + geom_sf(fill = NA)+ geom_sf(data = dam, color = "black") + labs(title = "Dams of 50 acres and more \n(Surface Area)\nin Idaho")
+ggplot(data = idaho) + geom_sf(fill = NA)+ geom_sf(data = well, color = "green") + labs(title = "Wells that produce \n(5000 gal.) or more \n in Idaho")
+#general plot
+ggplot(data = idaho) + geom_sf(fill = NA) + geom_sf(data = rivers, colour = "#0b2fd3") + geom_sf(data = dam, colour = "#473c1c") + geom_sf(data = well, colour = "#14e1d5") + labs(title = "Spatial Relationship Between Dams, Wells,\n and Rivers* in Idaho", subtitle = "*Snake River & Henrys Fork River", caption = "Rivers in Blue, Wells in Turquoise,\nand Dams in Brown")
+```
+
+## Conclusions
+
+We can observe the agglomeration of big wells close to the Snake and Henrys Fork Rivers

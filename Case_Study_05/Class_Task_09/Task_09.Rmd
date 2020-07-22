@@ -1,0 +1,138 @@
+---
+title: "Same Data Different Format"
+author: "A. Abdias Baldiviezo"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:  
+    keep_md: true
+    toc: true
+    toc_float: true
+    code_folding: hide
+    fig_height: 6
+    fig_width: 12
+    fig_align: 'center'
+---
+
+```{r, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r load_libraries, include=FALSE}
+# Use this R-Chunk to load all your libraries!
+#install.packages("tidyverse") # run this line once in console to get package
+library(tidyverse)
+library(readr)
+library(haven)
+library(readxl)
+library(downloader)
+library(plyr)
+```
+
+```{r load_data}
+
+# RDS
+rds_file <- read_rds(url("https://github.com/byuistats/data/blob/master/Dart_Expert_Dow_6month_anova/Dart_Expert_Dow_6month_anova.RDS?raw=true"))
+head(rds_file)
+
+#XLSX
+tmp <- tempfile(fileext = ".xlsx")
+download(url = "https://github.com/byuistats/data/blob/master/Dart_Expert_Dow_6month_anova/Dart_Expert_Dow_6month_anova.xlsx?raw=true", destfile = tmp, mode="wb")
+xlsx_file <- read_xlsx(tmp)
+head(xlsx_file)
+
+#CSV
+csv_file <- read_csv("https://raw.githubusercontent.com/byuistats/data/master/Dart_Expert_Dow_6month_anova/Dart_Expert_Dow_6month_anova.csv")
+head(csv_file)
+
+#DTA
+dta_file <- read_dta("https://github.com/byuistats/data/blob/master/Dart_Expert_Dow_6month_anova/Dart_Expert_Dow_6month_anova.dta?raw=true")
+head(dta_file)
+
+#SAV
+sav_file <- read_sav("https://github.com/byuistats/data/blob/master/Dart_Expert_Dow_6month_anova/Dart_Expert_Dow_6month_anova.sav?raw=true")
+head(sav_file)
+
+#assertions
+isTRUE(all.equal(rds_file, xlsx_file))
+isTRUE(all.equal(xlsx_file, csv_file))
+isTRUE(all.equal(csv_file, dta_file))
+isTRUE(all.equal(dta_file, sav_file))
+```
+
+## Background
+
+[ ] Take notes on your reading of the specified ‘R for Data Science’ chapter in the README.md or in a ‘.R’ script in the class task folder
+[ ] Use the appropriate functions in library(readr), library(haven), library(readxl) to read in the five files found on GitHub (Links to an external site.)
+
+    [ ] Use read_rds(url("WEBLOCATION.rds")) to download and read the .rds file type
+    [ ] Use the library(downloader) R package and use the download(mode = "wb") function to download the xlsx data as read_xlsx() cannot read files from the web path
+    [ ] Use tempfile() function to download and save the file.
+
+[ ] Check that all five files you have imported into R are in fact the same with all.equal()
+[ ] Use one of the files to make a graphic showing the performance of the Dart, DJIA, and Pro stock selections
+
+    [ ] Include a boxplot, the jittered returns, and the average return in your graphic
+
+## R for Data Science - Chapter 11
+
+-read_csv() is faster than read.csv()
+-parse_*() ,takes a character vector and return a more specialised vector like a logical, integer, or date
+-If there are many parsing failures, you’ll need to use problems() to get the complete set
+
+
+    parse_logical() and parse_integer() parse logicals and integers respectively. There’s basically nothing that can go wrong with these parsers so I won’t describe them here further.
+
+    parse_double() is a strict numeric parser, and parse_number() is a flexible numeric parser. These are more complicated than you might expect because different parts of the world write numbers in different ways.
+
+    parse_character() seems so simple that it shouldn’t be necessary. But one complication makes it quite important: character encodings.
+
+    parse_factor() create factors, the data structure that R uses to represent categorical variables with fixed and known values.
+
+    parse_datetime(), parse_date(), and parse_time() allow you to parse various date & time specifications. These are the most complicated because there are so many different ways of writing dates.
+
+-guess_parser(), which returns readr’s best guess, and parse_guess() which uses that guess to parse the column
+
+The heuristic tries each of the following types, stopping when it finds a match:
+
+    logical: contains only “F”, “T”, “FALSE”, or “TRUE”.
+    integer: contains only numeric characters (and -).
+    double: contains only valid doubles (including numbers like 4.5e-5).
+    number: contains valid doubles with the grouping mark inside.
+    time: matches the default time_format.
+    date: matches the default date_format.
+    date-time: any ISO8601 date.
+
+-Every parse_xyz() function has a corresponding col_xyz() function. You use parse_xyz() when the data is in a character vector in R already; you use col_xyz() when you want to tell readr how to load the data.
+
+- two useful functions for writing data back to disk: write_csv() and write_tsv(). Both functions increase the chances of the output file being read back in correctly
+-If you want to export a csv file to Excel, use write_excel_csv()
+-write_rds() and read_rds() are uniform wrappers around the base functions readRDS() and saveRDS(). These store data in R’s custom binary format called RDS
+-The feather package implements a fast binary file format that can be shared across programming languages - library(feather) - write_feather(obj, "string") - read_feather("str")
+
+-Other data types:
+
+
+    haven reads SPSS, Stata, and SAS files.
+
+    readxl reads excel files (both .xls and .xlsx).
+
+    DBI, along with a database specific backend (e.g. RMySQL, RSQLite, RPostgreSQL etc) allows you to run SQL queries against a database and return a data frame.
+
+    For hierarchical data: use jsonlite (by Jeroen Ooms) for json, and xml2 for XML
+    
+## Data Wrangling
+
+```{r tidy_data}
+# Use this R-Chunk to clean & wrangle your data!
+View(csv_file)
+summary(csv_file)
+count(csv_file, "contest_period")
+```
+
+## Data Visualization
+
+```{r plot_data}
+# Boxplot
+ggplot(csv_file, aes(variable, value, fill = variable)) + geom_boxplot(alpha = 0.2) + geom_jitter(width = 0.1) + stat_summary(fun = mean, geom = "point", shape = 20, size = 8, color = "blue", fill = "blue") + scale_y_continuous(breaks = seq(-50,80,by = 10)) + labs(title = "Performance of the Dart, DJIA, and Pro stock selections", caption = "Blue Circle = Average Return")
+```
+

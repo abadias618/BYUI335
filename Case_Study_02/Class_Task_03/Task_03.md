@@ -1,7 +1,7 @@
 ---
-title: "Task 3: Asking the right questions and dplyr, R&CW redo"
-author: "abdias baldiviezo"
-date: "May 14, 2020"
+title: "Asking the right questions and dplyr, R&CW redo"
+author: "A. Abdias Baldiviezo"
+date: "April 28, 2020"
 output:
   html_document:  
     keep_md: true

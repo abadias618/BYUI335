@@ -1,6 +1,6 @@
 ---
-title: "Task 3: Asking the right questions and dplyr, R&CW redo"
-author: "abdias baldiviezo"
+title: "Asking the right questions and dplyr, R&CW redo"
+author: "A. Abdias Baldiviezo"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 output:
   html_document:  

@@ -1,0 +1,113 @@
+---
+title: "Clean and Reformat (aka tidy)"
+author: "A. Abdias Baldiviezo"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:  
+    keep_md: true
+    toc: true
+    toc_float: true
+    code_folding: hide
+    fig_height: 6
+    fig_width: 12
+    fig_align: 'center'
+---
+
+```{r, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r load_libraries, include=FALSE}
+# Use this R-Chunk to load all your libraries!
+#install.packages("tidyverse") # run this line once in console to get package
+library(tidyverse)
+library(plyr)
+library(grid)
+library(gridExtra)
+```
+
+```{r load_data}
+# RDS
+data <- read_rds(url("https://github.com/byuistats/data/blob/master/Dart_Expert_Dow_6month_anova/Dart_Expert_Dow_6month_anova.RDS?raw=true"))
+```
+
+## Background
+
+With stock return data from the previous task, we need to tidy this data for the creation of a time series plot. We want to look at the returns for each six-month period of the year in which the returns were reported. Your plot should highlight the tighter spread of the DJIA as compared to the other two selection methods (DARTS and PROS). We also need to display a table of the DJIA returns with months on the rows and years in the columns (i.e. pivot wider on the data).
+
+[ ] Take notes on your reading of the specified ‘R for Data Science’ chapter in the README.md or in a ‘.R’ script in the class task folder
+[ ] Import the Dart_Expert_Dow_6month_anova data from GitHub (see details in previous task)
+[ ] The contestant_period column is not “tidy” we want to create a month_end and year_end column from the information it contains
+[ ] Save your “tidy” data as an .rds object
+[ ] Create a plot that shows the six-month returns by the year in which the returns are collected
+[ ] Include your plot in an .Rmd file with a short paragraph describing your plots. Make sure to display the tidyr code in your file
+[ ] Use code to create a table the DJIA returns that matches the table shown below (“pivot_wider” the data)
+
+## R for Data Science - Chapter 12
+
+-There are three interrelated rules which make a dataset tidy:
+
+    Each variable must have its own column.
+    Each observation must have its own row.
+    Each value must have its own cell.
+
+-dplyr, ggplot2, and all the other packages in the tidyverse are designed to work with tidy data
+-To fix these problems (tidy), you’ll need the two most important functions in tidyr: pivot_longer() and pivot_wider()
+-pivot_longer() makes datasets longer by increasing the number of rows and decreasing the number of columns. I don’t believe it makes sense to describe a dataset as being in “long form”
+-pivot_wider() is the opposite of pivot_longer(). You use it when an observation is scattered across multiple rows
+-separate() pulls apart one column into multiple columns, by splitting wherever a separator character appears
+-unite() is the inverse of separate(): it combines multiple columns into a single column.
+-complete() takes a set of columns, and finds all unique combinations. It then ensures the original dataset contains all those values, filling in explicit NAs where necessary.
+-You can fill in these missing values with fill(). It takes a set of columns where you want missing values to be replaced by the most recent non-missing value (sometimes called last observation carried forward).
+
+## Data Wrangling
+
+```{r tidy_data}
+# Use this R-Chunk to clean & wrangle your data!
+head(data)
+
+separated <- data %>% separate(contest_period, into = c("start_month","end_month"), sep = "-") %>% 
+  extract(end_month, into = c("end_year"), regex = "([0-9]{4})", remove = FALSE, convert = TRUE) %>% 
+  extract(end_month, into = c("end_month"), regex = "([^0-9]{1,9})", remove = TRUE, convert = TRUE) %>%
+  extract(start_month, into = c("start_year"), regex = "([0-9]{4})", remove = FALSE, convert = TRUE) %>% 
+  extract(start_month, into = c("start_month"), regex = "([^0-9]{1,9})", remove = TRUE, convert = TRUE)
+
+#check if months are spelled right
+count(separated,"start_month")
+count(separated,"end_month")
+#clean months
+separated <- separated %>% mutate(end_month = ifelse(end_month == "Dec.", "December", end_month))
+separated <- separated %>% mutate(end_month = ifelse(end_month == "Febuary", "February", end_month))
+separated <- separated %>% mutate(start_month = ifelse(start_month == "Febuary", "February", start_month))
+#check if months are spelled right
+count(separated,"start_month")
+count(separated,"end_month")
+
+separated <- separated %>% complete(start_year)
+head(separated)
+saveRDS(separated, file = "tidy_Dart_Expert_Dow_6month_anova.rds")
+
+#pivoting for table
+dija <- select(filter(separated, variable == "DJIA"), end_month, end_year, value)
+wide <- dija %>% pivot_wider(names_from = end_year, values_from = value)
+wide <- wide %>% select("end_month",sort(colnames(wide)))
+names(wide)[names(wide) == "end_month"] <- "Month"
+View(wide)
+```
+
+## Data Visualization
+
+```{r plot_data}
+
+#table
+grid.table(wide)
+
+# Use this R-Chunk to plot & visualize your data!
+ggplot(separated, aes(end_year, value, fill = variable)) + geom_bar(stat = "identity") + scale_fill_brewer(palette = "Accent") + scale_x_continuous(breaks = seq(1990,1999, by = 1)) + scale_y_continuous(breaks = seq(-250, 750 ,by = 50)) + labs(title = "Six-month returns by the year in which the returns were collected", fill = "Stock Type") + geom_hline(aes(yintercept = 0))
+
+
+```
+
+## Comment
+The Stocks had more return on 1991 and 1995 (years of collection from the 6 months period), of all the DARTS Stock is the one with better return in every year except 1990 and 1993, where the negative return (or loss) was greater.
+

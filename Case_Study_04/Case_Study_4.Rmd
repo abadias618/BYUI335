@@ -1,0 +1,83 @@
+---
+title: "Reducing Gun Deaths (FiveThrityEight)"
+author: "A. Abdias Baldiviezo"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:  
+    keep_md: true
+    toc: true
+    toc_float: true
+    code_folding: hide
+    fig_height: 6
+    fig_width: 12
+    fig_align: 'center'
+---
+
+```{r, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r load_libraries, include=FALSE}
+# Use this R-Chunk to load all your libraries!
+#install.packages("tidyverse") # run this line once in console to get package
+library(tidyverse)
+
+```
+
+```{r load_data}
+# Use this R-Chunk to import all your datasets!
+gun_data <- read.csv("https://raw.githubusercontent.com/fivethirtyeight/guns-data/master/full_data.csv")
+```
+
+## Background
+
+
+    [ ] Provide a brief summary of the FiveThirtyEight article (Links to an external site.)
+        [ ] Create one plot that provides similar insight to their visualization in the article. It does not have to look like theirs.
+        [ ] Write a short paragraph summarizing their article
+    [ ] Address the client’s need for emphasis areas of their commercials for different seasons of the year.
+        [ ] Provide plots that help them know the different potential groups (variables) they could address in different seasons (2-4 visualizations seem necessary)
+        [ ] Write a short paragraph describing each image
+    [ ] Compile your .md and .html file into your git repository
+    [ ] Find two other student’s compiled files in their repository and provide feedback using the issues feature in GitHub (If they already have three issues find a different student to critique)
+    [ ] Address 1-2 of the issues posted on your project and push the updates to GitHub
+
+
+## Data Wrangling
+
+```{r tidy_data}
+# Use this R-Chunk to clean & wrangle your data!
+head(gun_data)
+gun_grouped <- gun_data %>% group_by(month, fct_explicit_na(intent)) %>% tally()
+View(gun_grouped)
+```
+
+## Data Visualization
+
+```{r plot_data}
+# Use this R-Chunk to plot & visualize your data!
+ggplot(gun_data, aes(age, X, color = age)) + geom_hex() + labs(title = "Number of Gun Deaths by the Age", y = "") + scale_y_continuous(labels = NULL) + scale_x_continuous(breaks = seq(0,110, by = 5))
+```
+
+## FiveThirtyEight Gun Deaths
+
+https://fivethirtyeight.com/features/gun-deaths/ 
+
+Gun deaths data is analyzed and presented in a way that is easier to understand where all those deaths come from,
+The graphics display each record and color it in different ways to analyze the situation.
+It is concluded that the deaths are more varied than we think. Other important factors mentioned are: Most deaths are males, most of them are young (15-35, as shown in the graph above), most of the deaths come from suicide.
+
+```{r plot_data2}
+# Target audience #1
+ggplot(gun_data, aes(month, fill = race)) + geom_histogram(binwidth = 0.5) + labs(title = "Ethnic group Gun Deaths by Month") + scale_y_continuous(breaks = seq(0,10000, by = 1000)) + scale_x_continuous(breaks = seq(0,12, by = 1)) + theme_minimal()
+# Target audience #2
+ggplot(gun_grouped, aes(month, n ,color = `fct_explicit_na(intent)`)) + geom_line() + scale_x_continuous(breaks = seq(0,12, by = 1)) + scale_y_continuous(breaks = seq(0,5500, by = 500)) + labs(title = "Increase, Decrease of number of Gun Deaths through the months by Type", y = "number of deaths", color = "Type of Death")
+```
+
+## Graph 1
+
+In this first graph we highlight the race of the deceased persons during each month acccounted for in numbers.
+
+## Graph 2
+
+We see through a line the increase, decrease in deaths by type, we can observe that homicide and suicide are at the top, and also the difference in quantity between the top type of death and its succesor.

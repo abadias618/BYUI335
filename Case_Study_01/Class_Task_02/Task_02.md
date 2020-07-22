@@ -1,7 +1,7 @@
 ---
-title: "Task 2: A first time for everything"
-author: "abdias baldiviezo"
-date: "May 14, 2020"
+title: "A first time for everything"
+author: "A. Abdias Baldiviezo"
+date: "April 24, 2020"
 output:
   html_document:  
     keep_md: true
@@ -138,8 +138,8 @@ glimpse(flights)
 ```
 
 ```
-## Observations: 336,776
-## Variables: 19
+## Rows: 336,776
+## Columns: 19
 ## $ year           <int> 2013, 2013, 2013, 2013, 2013, 2013, 2013, 2013, 2013, …
 ## $ month          <int> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, …
 ## $ day            <int> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, …
@@ -206,8 +206,8 @@ glimpse(airports)
 ```
 
 ```
-## Observations: 1,458
-## Variables: 8
+## Rows: 1,458
+## Columns: 8
 ## $ faa   <chr> "04G", "06A", "06C", "06N", "09J", "0A9", "0G6", "0G7", "0P2", …
 ## $ name  <chr> "Lansdowne Airport", "Moton Field Municipal Airport", "Schaumbu…
 ## $ lat   <dbl> 41.13047, 32.46057, 41.98934, 41.43191, 31.07447, 36.37122, 41.…
@@ -222,4 +222,3 @@ glimpse(airports)
 ?flights
 ```
 
-## Conclusions

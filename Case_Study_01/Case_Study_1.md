@@ -1,6 +1,6 @@
 ---
-title: "CASE STUDY TITLE"
-author: "YOUR NAME"
+title: "Visualization Critique and Slack Set-up"
+author: "A. Abdias Baldiviezo"
 date: "April 25, 2020"
 output:
   html_document:  

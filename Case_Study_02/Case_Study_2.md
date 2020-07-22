@@ -1,7 +1,7 @@
 ---
-title: "Case Study 2: Wealth and Life Expectancy (Gapminder)"
+title: "Wealth and Life Expectancy (Gapminder)"
 author: "Abdias Baldiviezo"
-date: "May 18, 2020"
+date: "May 2, 2020"
 output:
   html_document:  
     keep_md: true

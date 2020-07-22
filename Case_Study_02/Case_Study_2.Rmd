@@ -1,5 +1,5 @@
 ---
-title: "Case Study 2: Wealth and Life Expectancy (Gapminder)"
+title: "Wealth and Life Expectancy (Gapminder)"
 author: "Abdias Baldiviezo"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 output:

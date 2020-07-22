@@ -1,0 +1,142 @@
+---
+title: "Interactive Maps"
+author: "A. Abdias Baldiviezo"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:  
+    keep_md: true
+    toc: true
+    toc_float: true
+    code_folding: hide
+    fig_height: 6
+    fig_width: 12
+    fig_align: 'center'
+---
+
+```{r, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r load_libraries, include=FALSE}
+# Use this R-Chunk to load all your libraries!
+#install.packages("tidyverse") # run this line once in console to get package
+library(tidyverse)
+library(USAboundaries) 
+library(USAboundariesData)
+library(sf)
+library(leaflet)
+```
+
+```{r load_data}
+# excluded Alaska, American Samoa, Guam, Puerto Rico, Hawaii
+states <-us_states(map_date = NULL, states = c("Alabama", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "District of Columbia", "Florida", "Georgia", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Minor Outlying Islands", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Northern Mariana Islands", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "U.S. Virgin Islands", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"))
+idaho_county <- us_counties(states = "Idaho")
+cc <- census_cities
+```
+
+## Background - Leaflet
+
+-You create a Leaflet map with these basic steps:
+
+    Create a map widget by calling leaflet().
+    Add layers (i.e., features) to the map by using layer functions (e.g. addTiles, addMarkers, addPolygons) to modify the map widget.
+    Repeat step 2 as desired.
+    Print the map widget to display it.
+
+-The function leaflet() returns a Leaflet map widget, which stores a list of objects that can be modified or updated later. Most functions in this package have an argument map as their first argument, which makes it easy to use the pipe operator %>% in the magrittr package
+
+-You can manipulate the attributes of the map widget using a series of methods. Please see the help page ?setView for details.
+
+    setView() sets the center of the map view and the zoom level;
+    fitBounds() fits the view into the rectangle [lng1, lat1] – [lng2, lat2];
+    clearBounds() clears the bound, so that the view will be automatically determined by the range of latitude/longitude data in the map layers if provided;
+
+-Both leaflet() and the map layer functions have an optional data parameter that is designed to receive spatial data in one of several forms:
+
+    From base R:
+        lng/lat matrix
+        data frame with lng/lat columns
+    From the sp package:
+        SpatialPoints[DataFrame]
+        Line/Lines
+        SpatialLines[DataFrame]
+        Polygon/Polygons
+        SpatialPolygons[DataFrame]
+    From the maps package:
+        the data frame from returned from map()
+
+-Using Basemaps
+
+Leaflet supports basemaps using map tiles, popularized by Google Maps and now used by nearly all interactive web maps.
+
+-Markers
+
+Use markers to call out points on the map. Marker locations are expressed in latitude/longitude coordinates, and can either appear as icons or as circles.
+
+-Popups
+
+Popups are small boxes containing arbitrary HTML, that point to a specific point on the map.
+
+Use the addPopups() function to add standalone popup to the map.
+
+-Lines and Shapes
+
+Leaflet makes it easy to take spatial lines and shapes from R and add them to maps.
+Polygons and Polylines
+
+Line and polygon data can come from a variety of sources:
+
+    SpatialPolygons, SpatialPolygonsDataFrame, Polygons, and Polygon objects (from the sp package)
+    SpatialLines, SpatialLinesDataFrame, Lines, and Line objects (from the sp package)
+    MULTIPOLYGON, POLYGON, MULTILINESTRING, and LINESTRING objects (from the sf package)
+    map objects (from the maps package’s map() function); use map(fill = TRUE) for polygons, FALSE for polylines
+    Two-column numeric matrix; the first column is longitude and the second is latitude. Polygons are separated by rows of (NA, NA). It is not possible to represent multi-polygons nor polygons with holes using this method; use SpatialPolygons instead.
+    
+-Colors
+
+An important part of spatial visualization is mapping variables to colors. While R has no shortage of built-in functionality to map values to colors, we found that there was enough friction in the process to warrant introducing some wrapper functions that do a lot of the work for you.
+
+To that end, we’ve created a family of color* convenience functions that can be used to easily generate palette functions. Essentially, you call the appropriate color function with 1) the colors you want to use and 2) optionally, the range of inputs (i.e. domain) that are expected. The color function returns a palette function that can be passed a vector of input values, and it’ll return a vector of colors in #RRGGBB(AA) format.
+
+-Legends
+
+The Leaflet package includes convenience functions for creating color legends. In this section, we will build on the example from the Colors page.
+
+
+      
+## Data Wrangling
+
+```{r tidy_data}
+cc <- cc %>% filter(state_name != "Alaska",
+              state_name != "American Samoa",
+              state_name != "Guam",
+              state_name != "Puerto Rico",
+              state_name != "Hawaii") #%>% filter(population > 100000)
+#summarize population years
+grouped <- cc %>% group_by(city,state_name) %>% summarise(mean(population))
+grouped <- ungroup(grouped)
+#get top 3 populations in each state
+top <- grouped %>% group_by(state_name) %>% top_n(n = 3, wt = `mean(population)`)
+g <- select(grouped, city, `mean(population)`)
+final <- st_join(top, g, by = "city")
+final <- final[1:4]
+final <- as.data.frame(final)
+#make a table for only the labels which are the biggest city in each state
+finalLabels <- final %>% group_by(state_name) %>% top_n(n = 1, wt = `mean(population).x`)
+# get the separate coordinates from the sfc_POINT
+coordinates <- unlist(finalLabels$geometry) %>% matrix(ncol = 2, byrow = TRUE) %>% as_tibble() %>% setNames(c("x","y"))
+#add coordinates to the labels
+finalLabels <- bind_cols(finalLabels, coordinates)
+#add Idaho by county to the states
+states <- bind_rows(states, idaho_county)
+```
+
+## Data Visualization
+
+```{r plot_data}
+# Use this R-Chunk to plot & visualize your data!
+
+m = leaflet(states$geometry) %>% addTiles() %>%
+  addPolygons(fillColor = topo.colors(10, alpha = NULL), stroke = FALSE) %>% fitBounds(-120, 30, -40, 50)
+m
+```

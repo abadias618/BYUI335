@@ -1,0 +1,74 @@
+---
+title: "The US Grocer (KR)"
+author: "A. Abdias Baldiviezo"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:  
+    keep_md: true
+    toc: true
+    toc_float: true
+    code_folding: hide
+    fig_height: 6
+    fig_width: 12
+    fig_align: 'center'
+---
+
+```{r, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r load_libraries, include=FALSE}
+# Use this R-Chunk to load all your libraries!
+#install.packages("tidyverse") # run this line once in console to get package
+library(tidyverse)
+library(dygraphs)
+library(tidyquant)
+```
+
+```{r load_data}
+# Use this R-Chunk to import all your datasets!
+kr_five_years <- tq_get("KR", get = "stock.prices", from = "2015-06-26", to = "2020-06-26") 
+
+kr_two_years <- tq_get("KR", get = "stock.prices", from = "2018-04-15", to = "2020-04-15") 
+```
+
+## Background
+
+Interactive visualizations can often be powerful for data investigations. They let your team get at questions in real time. Use the Kroger (KR) stock price to build an interactive visualization of their performance over the last five years. Take some time to build a couple of different visualizations that show Krogers performance. See the task items below for a description.
+
+## Dygraphs Notes
+
+-You can use dygraphs at the R console, within R Markdown documents, and within Shiny applications. 
+-dygraph(data) to create
+-dygraph(data) %>% dyRangeSelector() to zoom range
+-dySeries("", label = "") for time series 
+-dyOptions(stackedGraph = TRUE) stack graphs
+-dyRangeSelector(height = 20) adjust height
+
+## Data Wrangling
+
+```{r tidy_data}
+# Use this R-Chunk to clean & wrangle your data!
+kr_five_years <- kr_five_years %>% tq_transmute(adjusted, periodReturn, period = "daily", col_rename = "returns")  %>% mutate(cr = cumprod(1 + returns), cumulative_returns = cr - 1 )
+
+kr_two_years <- kr_two_years %>% tq_transmute(adjusted, periodReturn, period = "daily", col_rename = "returns")  %>% mutate(cr = cumprod(1 + returns), cumulative_returns = cr - 1 )
+kr_final <- kr_two_years %>% select(date, returns, cr, cumulative_returns ) %>% mutate(cr = cr * 10000, cumulative_returns = cumulative_returns * 10000)
+```
+
+## Data Visualization
+### 5 year data
+Here we see the return based on 1 unit of investment and how it oscilates through the 5 year range.
+```{r, fig.width= 9, fig.height= 4}
+# 5 year data
+dygraph(cbind(kr_five_years$cumulative_returns, as.xts(kr_five_years$date)), main = "Cumulative Return of KR stock from 2015-2020", ylab = "return amount") %>%  dySeries("kr_five_years.cumulative_returns", label = "return") %>% dyLegend(show = "always", hideOnMouseOut = FALSE)
+```
+
+### 2 year investment
+With an investment of 10,000$ we can see at every point in time (daily), how much of our investment we are getting back.
+In red the lowest values reached are highlighted, and in green the highest values.
+
+```{r, fig.width= 9, fig.height= 4}
+# 5 year data
+dygraph(cbind(kr_final$cumulative_returns, as.xts(kr_final$date)), main = "Cumulative Return of $10,000 in KR stock 04/2015 - 04/2020", ylab = "return amount") %>%  dySeries("kr_final.cumulative_returns", label = "return") %>% dyLegend(show = "always", hideOnMouseOut = FALSE) %>% dyRangeSelector() %>%  dyShading(from = "2019-07-01", to = "2019-10-01", color = "#FFE6E6") %>%
+  dyShading(from = "2020-01-01", to = "2020-04-01", color = "#CCEBD6")
+```

@@ -1,0 +1,111 @@
+---
+title: "Take me out to the ball game"
+author: "A. Abdias Baldiviezo"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:  
+    keep_md: true
+    toc: true
+    toc_float: true
+    code_folding: hide
+    fig_height: 6
+    fig_width: 12
+    fig_align: 'center'
+---
+
+```{r, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r load_libraries, include=FALSE}
+# Use this R-Chunk to load all your libraries!
+#install.packages("tidyverse") # run this line once in console to get package
+library(tidyverse)
+library(Lahman)
+library(blscrapeR)
+```
+
+```{r load_data}
+# Use this R-Chunk to import all your datasets!
+schools <- Schools
+college <- CollegePlaying
+salary <- Salaries
+player <- People
+team <- Teams
+```
+
+## Background
+
+Over the campfire, you and a friend get into a debate about which college in Utah has had the best MLB success. As an avid BYU fan, you want to prove your point, and you go to data to settle the debate. You need a clear visualization that depicts the performance of BYU players compared to other Utah college players that have played in the major leagues. The library(Lahman) package has a comprehensive set of baseball data. It is great for testing out our relational data skills. We will also need a function to adjust player salaries due to inflation- library(blscrapeR)
+
+## R for Data Science - Chapter 13
+
+-To work with relational data you need verbs that work with pairs of tables. There are three families of verbs designed to work with relational data:
+
+    Mutating joins, which add new variables to one data frame from matching observations in another.
+
+    Filtering joins, which filter observations from one data frame based on whether or not they match an observation in the other table.
+
+    Set operations, which treat observations as if they were set elements.
+
+-There are two types of keys:
+
+    A primary key uniquely identifies an observation in its own table. 
+
+    A foreign key uniquely identifies an observation in another table. 
+
+-If a table lacks a primary key, it’s sometimes useful to add one with mutate() and row_number(). That makes it easier to match observations if you’ve done some filtering and want to check back in with the original data. This is called a surrogate key.
+
+-A mutating join allows you to combine variables from two tables. It first matches observations by their keys, then copies across variables from one table to the other.
+
+-An inner join keeps observations that appear in both tables. An outer join keeps observations that appear in at least one of the tables. There are three types of outer joins:
+
+    A left join keeps all observations in x.
+    A right join keeps all observations in y.
+    A full join keeps all observations in x and y.
+
+-Filtering joins match observations in the same way as mutating joins, but affect the observations, not the variables. There are two types:
+
+    semi_join(x, y) keeps all observations in x that have a match in y.
+    anti_join(x, y) drops all observations in x that have a match in y.
+
+-These set operations expect the x and y inputs to have the same variables, and treat the observations like sets:
+
+    intersect(x, y): return only observations in both x and y.
+    union(x, y): return unique observations in x and y.
+    setdiff(x, y): return observations in x, but not in y.
+
+## Data Wrangling
+
+```{r tidy_data}
+# Use this R-Chunk to clean & wrangle your data!
+head(schools)
+head(college)
+head(salary)
+head(player)
+head(team)
+View(salary)
+#since some players played in more than 1 college we need to pivot and unite the data
+general <- player %>% select(playerID, nameFirst, nameLast) %>%
+  inner_join(select(college, playerID, schoolID), by = "playerID") %>%
+  inner_join(select(schools, schoolID, name_full, state), by = "schoolID") %>%
+  inner_join(select(salary, playerID, salary), by = "playerID")
+#get value of 2017 dollars today 2020
+adj <- inflation_adjust(base_year = 2017)
+adj <- as.numeric(select(filter(adj, year == "2020"), adj_value))
+#adjust
+general <- mutate(general, salary = salary * adj)
+View(general)
+utschools <- filter(general, state == "UT")
+```
+
+## Data Visualization
+
+```{r plot_data}
+# Use this R-Chunk to plot & visualize your data!
+ggplot(utschools, aes(name_full, salary/1000, color = salary)) + geom_point() + theme(axis.text.x = element_text(angle = 90)) + labs(title = "Average salary per year of players of Utah Universities", subtitle = "(adjusted to the value of the dollar in 2017)", x = "", y = "Salary in thousands")
+```
+
+## Conclusions
+
+Professional Players that studied at BYU or Dixie State are the highest payed.
