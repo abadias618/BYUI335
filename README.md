@@ -1,4 +1,4 @@
 # BYUI335
 Data Wrangling &amp; Visualization
 
-My name is Abdias Baldiviezo and I'm from La Paz, Bolivia.
+Miscelaneous datasets analysis and visualization with dygraphs, ggplot, leaflet, Shiny, tidyverse, lubridate, readr, etc.
